@@ -350,7 +350,7 @@ sub_control_id = "#{control_id}.7"
 control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   impact 'medium'
 
-  title "[#{control_abbrev.upcase}] 7 Ensure 'log_statement' database flag for Cloud SQL PostgreSQL instance is set appropriately"
+  title "[#{control_abbrev.upcase}] Ensure 'log_statement' database flag for Cloud SQL PostgreSQL instance is set appropriately"
 
   desc 'The value of log_statement flag determined the SQL statements that are logged.'
   desc 'rationale', "Auditing helps in troubleshooting operational problems and also permits forensic analysis.
@@ -384,7 +384,7 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
         describe.one do
           sql_cache.instance_objects[db].settings.database_flags.each do |flag|
             next unless flag.name == 'log_statement'
-            describe "[#{gcp_project_id} , #{db} ] flag 'log_statement' set #{flag.value} " do
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_statement' set appropriately" do
               subject { flag }
               its('name') { should cmp 'log_statement' }
             end
@@ -666,6 +666,62 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
               subject { flag }
               its('name') { should cmp 'log_statement_stats' }
               its('value') { should cmp 'off' }
+            end
+          end
+        end
+      end
+    else
+      impact 'none'
+      describe "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database. This test is Not Applicable." do
+        skip "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database"
+      end
+    end
+  end
+end
+
+# 6.2.13
+sub_control_id = "#{control_id}.13"
+control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
+  impact 'medium'
+
+  title "[#{control_abbrev.upcase}] Ensure that the 'log_min_messages' database flag for Cloud SQL PostgreSQL instance is set appropriately"
+
+  desc 'The log_min_messages flag defines the minimum message severity level that is considered as an error statement.'
+  desc 'rationale', "Auditing helps in troubleshooting operational problems and also permits forensic analysis.
+  If log_min_error_statement is not set to the correct value, messages may not be classified
+  as error messages appropriately. Considering general log messages as error messages
+  would make it difficult to find actual errors, while considering only stricter severity levels
+  as error messages may skip actual errors to log their SQL statements. The
+  log_min_messages flag should be set in accordance with the organization's logging policy.
+  This recommendation is applicable to PostgreSQL database instances."
+
+  tag cis_scored: true
+  tag cis_level: 1
+  tag cis_gcp: sub_control_id.to_s
+  tag cis_version: cis_version.to_s
+  tag project: gcp_project_id.to_s
+  tag nist: ['AU-3']
+
+  ref 'CIS Benchmark', url: cis_url.to_s
+  ref 'GCP Docs', url: 'https://cloud.google.com/sql/docs/postgres/flags'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/9.6/runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHEN'
+
+  sql_cache.instance_names.each do |db|
+    if sql_cache.instance_objects[db].database_version.include? 'POSTGRES'
+      if sql_cache.instance_objects[db].settings.database_flags.nil?
+        impact 'medium'
+        describe "[#{gcp_project_id} , #{db} ] does not any have database flags." do
+          subject { false }
+          it { should be true }
+        end
+      else
+        impact 'medium'
+        describe.one do
+          sql_cache.instance_objects[db].settings.database_flags.each do |flag|
+            next unless flag.name == 'log_min_messages'
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_min_messages' set appropriately " do
+              subject { flag }
+              its('name') { should cmp 'log_min_messages' }
             end
           end
         end
