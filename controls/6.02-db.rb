@@ -114,7 +114,7 @@ recommendation is applicable to PostgreSQL database instances."
               its('name') { should cmp 'log_error_verbosity' }
               its('value') { should cmp 'default' }
             end
-            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_error_verbosity' set to 'DEFAULT' or stricter " do
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_error_verbosity' set to 'VERBOSE' or stricter " do
               subject { flag }
               its('name') { should cmp 'log_error_verbosity' }
               its('value') { should cmp 'verbose' }
@@ -273,7 +273,7 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
         impact 'medium'
         describe.one do
           sql_cache.instance_objects[db].settings.database_flags.each do |flag|
-            next unless flag.name == 'log_lock_waits'
+            next unless flag.name == 'log_duration'
             describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_duration' set to 'on' " do
               subject { flag }
               its('name') { should cmp 'log_duration' }
@@ -344,6 +344,287 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
     end
   end
 end
+
+
+# 6.2.8
+sub_control_id = "#{control_id}.8"
+control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
+  impact 'medium'
+
+  title "[#{control_abbrev.upcase}] Ensure 'log_hostname' database flag for Cloud SQL PostgreSQL instance is set appropriately"
+
+  desc 'PostgreSQL logs only the IP address of the connecting hosts. The log_hostname flag controls the logging of hostnames in addition to the IP addresses logged.'
+  desc 'rationale',  "Logging hostnames can incur overhead on server performance as for each statement
+                      logged, DNS resolution will be required to convert IP address to hostname. Depending on
+                      the setup, this may be non-negligible. Additionally, the IP addresses that are logged can be
+                      resolved to their DNS names later when reviewing the logs excluding the cases where
+                      dynamic hostnames are used. This recommendation is applicable to PostgreSQL database
+                      instances."
+
+  tag cis_scored: true
+  tag cis_level: 1
+  tag cis_gcp: sub_control_id.to_s
+  tag cis_version: cis_version.to_s
+  tag project: gcp_project_id.to_s
+  tag nist: ['AU-3']
+
+  ref 'CIS Benchmark', url: cis_url.to_s
+  ref 'GCP Docs', url: 'https://cloud.google.com/sql/docs/postgres/flags'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT'
+
+  sql_cache.instance_names.each do |db|
+    if sql_cache.instance_objects[db].database_version.include? 'POSTGRES'
+      if sql_cache.instance_objects[db].settings.database_flags.nil?
+        impact 'medium'
+        describe "[#{gcp_project_id} , #{db} ] does not any have database flags." do
+          subject { false }
+          it { should be true }
+        end
+      else
+        impact 'medium'
+        describe.one do
+          sql_cache.instance_objects[db].settings.database_flags.each do |flag|
+            next unless flag.name == 'log_hostname'
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_hostname' set to 'on' " do
+              subject { flag }
+              its('name') { should cmp 'log_hostname' }
+              its('value') { should cmp 'on' }
+            end
+          end
+        end
+      end
+    else
+      impact 'none'
+      describe "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database. This test is Not Applicable." do
+        skip "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database"
+      end
+    end
+  end
+end
+
+
+# 6.2.9
+sub_control_id = "#{control_id}.9"
+control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
+  impact 'medium'
+
+  title "[#{control_abbrev.upcase}] Ensure 'log_parser_stats' database flag for Cloud SQL PostgreSQL instance is set to 'off'"
+
+  desc 'The PostgreSQL planner/optimizer is responsible to parse and verify the syntax of each query received by the server.'
+  desc 'rationale',  "The log_parser_stats flag enables a crude profiling method for logging parser
+  performance statistics which even though can be useful for troubleshooting, it may
+  increase the amount of logs significantly and have performance overhead. This
+  recommendation is applicable to PostgreSQL database instances."
+
+  tag cis_scored: true
+  tag cis_level: 1
+  tag cis_gcp: sub_control_id.to_s
+  tag cis_version: cis_version.to_s
+  tag project: gcp_project_id.to_s
+  tag nist: ['AU-3']
+
+  ref 'CIS Benchmark', url: cis_url.to_s
+  ref 'GCP Docs', url: 'https://cloud.google.com/sql/docs/postgres/flags'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/10/parser-stage.html'
+
+  sql_cache.instance_names.each do |db|
+    if sql_cache.instance_objects[db].database_version.include? 'POSTGRES'
+      if sql_cache.instance_objects[db].settings.database_flags.nil?
+        impact 'medium'
+        describe "[#{gcp_project_id} , #{db} ] does not any have database flags." do
+          subject { false }
+          it { should be true }
+        end
+      else
+        impact 'medium'
+        describe.one do
+          sql_cache.instance_objects[db].settings.database_flags.each do |flag|
+            next unless flag.name == 'log_parser_stats'
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_parser_stats' set to 'off' " do
+              subject { flag }
+              its('name') { should cmp 'log_parser_stats' }
+              its('value') { should cmp 'off' }
+            end
+          end
+        end
+      end
+    else
+      impact 'none'
+      describe "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database. This test is Not Applicable." do
+        skip "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database"
+      end
+    end
+  end
+end
+
+
+# 6.2.10
+sub_control_id = "#{control_id}.10"
+control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
+  impact 'medium'
+
+  title "[#{control_abbrev.upcase}] Ensure 'log_planner_stats' database flag for Cloud SQL PostgreSQL instance is set to 'off'"
+
+  desc 'The same SQL query can be excuted in multiple ways and still produce different results. '
+  desc 'rationale',  "The log_planner_stats flag enables a crude profiling method for logging PostgreSQL
+  planner performance statistics which even though can be useful for troubleshooting, it may
+  increase the amount of logs significantly and have performance overhead. This
+  recommendation is applicable to PostgreSQL database instances."
+
+  tag cis_scored: true
+  tag cis_level: 1
+  tag cis_gcp: sub_control_id.to_s
+  tag cis_version: cis_version.to_s
+  tag project: gcp_project_id.to_s
+  tag nist: ['AU-3']
+
+  ref 'CIS Benchmark', url: cis_url.to_s
+  ref 'GCP Docs', url: 'https://cloud.google.com/sql/docs/postgres/flags'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/9.6/runtime-config-statistics.html#RUNTIME-CONFIG-STATISTICS-MONITOR'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/9.5/planner-optimizer.html'
+
+  sql_cache.instance_names.each do |db|
+    if sql_cache.instance_objects[db].database_version.include? 'POSTGRES'
+      if sql_cache.instance_objects[db].settings.database_flags.nil?
+        impact 'medium'
+        describe "[#{gcp_project_id} , #{db} ] does not any have database flags." do
+          subject { false }
+          it { should be true }
+        end
+      else
+        impact 'medium'
+        describe.one do
+          sql_cache.instance_objects[db].settings.database_flags.each do |flag|
+            next unless flag.name == 'log_planner_stats'
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_planner_stats' set to 'off' " do
+              subject { flag }
+              its('name') { should cmp 'log_planner_stats' }
+              its('value') { should cmp 'off' }
+            end
+          end
+        end
+      end
+    else
+      impact 'none'
+      describe "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database. This test is Not Applicable." do
+        skip "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database"
+      end
+    end
+  end
+end
+
+
+# 6.2.11
+sub_control_id = "#{control_id}.11"
+control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
+  impact 'medium'
+
+  title "[#{control_abbrev.upcase}] Ensure 'log_executor_stats' database flag for Cloud SQL PostgreSQL instance is set to 'off'"
+
+  desc 'The PostgreSQL executor is responsible to execute the plan handed over by the PostgreSQL planner. '
+  desc 'rationale',  "The log_executor_stats flag enables a crude profiling method for logging PostgreSQL
+  executor performance statistics which even though can be useful for troubleshooting, it
+  may increase the amount of logs significantly and have performance overhead. This
+  recommendation is applicable to PostgreSQL database instances."
+
+  tag cis_scored: true
+  tag cis_level: 1
+  tag cis_gcp: sub_control_id.to_s
+  tag cis_version: cis_version.to_s
+  tag project: gcp_project_id.to_s
+  tag nist: ['AU-3']
+
+  ref 'CIS Benchmark', url: cis_url.to_s
+  ref 'GCP Docs', url: 'https://cloud.google.com/sql/docs/postgres/flags'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/8.2/executor.html'
+
+  sql_cache.instance_names.each do |db|
+    if sql_cache.instance_objects[db].database_version.include? 'POSTGRES'
+      if sql_cache.instance_objects[db].settings.database_flags.nil?
+        impact 'medium'
+        describe "[#{gcp_project_id} , #{db} ] does not any have database flags." do
+          subject { false }
+          it { should be true }
+        end
+      else
+        impact 'medium'
+        describe.one do
+          sql_cache.instance_objects[db].settings.database_flags.each do |flag|
+            next unless flag.name == 'log_executor_stats'
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_executor_stats' set to 'off' " do
+              subject { flag }
+              its('name') { should cmp 'log_executor_stats' }
+              its('value') { should cmp 'off' }
+            end
+          end
+        end
+      end
+    else
+      impact 'none'
+      describe "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database. This test is Not Applicable." do
+        skip "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database"
+      end
+    end
+  end
+end
+
+
+# 6.2.12
+sub_control_id = "#{control_id}.12"
+control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
+  impact 'medium'
+
+  title "[#{control_abbrev.upcase}] Ensure 'log_statement_stats' database flag for Cloud SQL PostgreSQL instance is set to 'off'"
+
+  desc 'The log_statement_stats flag controls the inclusion of end to end performance statistics of a SQL query in the PostgreSQL logs for each query. '
+  desc 'rationale',  "The log_statement_stats flag enables a crude profiling method for logging end to end
+  performance statistics of a SQL query. This can be useful for troubleshooting but may
+  increase the amount of logs significantly and have performance overhead. This
+  recommendation is applicable to PostgreSQL database instances."
+
+  tag cis_scored: true
+  tag cis_level: 1
+  tag cis_gcp: sub_control_id.to_s
+  tag cis_version: cis_version.to_s
+  tag project: gcp_project_id.to_s
+  tag nist: ['AU-3']
+
+  ref 'CIS Benchmark', url: cis_url.to_s
+  ref 'GCP Docs', url: 'https://cloud.google.com/sql/docs/postgres/flags'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/9.6/runtime-config-statistics.html#RUNTIME-CONFIG-STATISTICS-MONITOR'
+
+  sql_cache.instance_names.each do |db|
+    if sql_cache.instance_objects[db].database_version.include? 'POSTGRES'
+      if sql_cache.instance_objects[db].settings.database_flags.nil?
+        impact 'medium'
+        describe "[#{gcp_project_id} , #{db} ] does not any have database flags." do
+          subject { false }
+          it { should be true }
+        end
+      else
+        impact 'medium'
+        describe.one do
+          sql_cache.instance_objects[db].settings.database_flags.each do |flag|
+            next unless flag.name == 'log_statement_stats'
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_statement_stats' set to 'off' " do
+              subject { flag }
+              its('name') { should cmp 'log_statement_stats' }
+              its('value') { should cmp 'off' }
+            end
+          end
+        end
+      end
+    else
+      impact 'none'
+      describe "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database. This test is Not Applicable." do
+        skip "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database"
+      end
+    end
+  end
+end
+
 
 # 6.2.14
 sub_control_id = "#{control_id}.14"
