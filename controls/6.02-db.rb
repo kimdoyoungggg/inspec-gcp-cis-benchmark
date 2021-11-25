@@ -77,6 +77,60 @@ sub_control_id = "#{control_id}.2"
 control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   impact 'medium'
 
+  title "[#{control_abbrev.upcase}] Ensure 'log_error_verbosity' database flag for Cloud SQL PostgreSQL instance is set to 'DEFAULT' or stricter"
+
+  desc 'The log_error_verbosity flag controls the verbosity/details of messages logged. '
+  desc 'rationale', "Auditing helps in troubleshooting operational problems and also permits forensic analysis.
+        If log_error_verbosity is not set to the correct value, too many details or too few details
+        may be logged. This flag should be configured with a value of 'DEFAULT' or stricter. This
+        recommendation is applicable to PostgreSQL database instances."
+
+  tag cis_scored: true
+  tag cis_level: 1
+  tag cis_gcp: sub_control_id.to_s
+  tag cis_version: cis_version.to_s
+  tag project: gcp_project_id.to_s
+  tag nist: ['AU-3']
+
+  ref 'CIS Benchmark', url: cis_url.to_s
+  ref 'GCP Docs', url: 'https://cloud.google.com/sql/docs/postgres/flags'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/current/runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT'
+
+  sql_cache.instance_names.each do |db|
+    if sql_cache.instance_objects[db].database_version.include? 'POSTGRES'
+      if sql_cache.instance_objects[db].settings.database_flags.nil?
+        impact 'medium'
+        describe "[#{gcp_project_id} , #{db} ] does not any have database flags." do
+          subject { false }
+          it { should be true }
+        end
+      else
+        impact 'medium'
+        describe.one do
+          sql_cache.instance_objects[db].settings.database_flags.each do |flag|
+            next unless flag.name == 'log_error_verbosity'
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_error_verbosity' set to 'DEFAULT' or stricter " do
+              subject { flag }
+              its('name') { should cmp 'log_error_verbosity' }
+              its('value') { should cmp 'DEFAULT' }
+            end
+          end
+        end
+      end
+    else
+      impact 'none'
+      describe "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database. This test is Not Applicable." do
+        skip "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database"
+      end
+    end
+  end
+end
+
+# 6.2.3
+sub_control_id = "#{control_id}.3"
+control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
+  impact 'medium'
+
   title "[#{control_abbrev.upcase}] Ensure that the 'log_connections' database flag for Cloud SQL PostgreSQL instance is set to 'on'"
 
   desc 'Enabling the log_connections setting causes each attempted connection to the server to be logged, along with successful completion of client authentication. '
@@ -124,8 +178,8 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   end
 end
 
-# 6.2.3
-sub_control_id = "#{control_id}.3"
+# 6.2.4
+sub_control_id = "#{control_id}.4"
 control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   impact 'medium'
 
@@ -176,8 +230,8 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   end
 end
 
-# 6.2.4
-sub_control_id = "#{control_id}.4"
+# 6.2.6
+sub_control_id = "#{control_id}.6"
 control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   impact 'medium'
 
@@ -229,8 +283,8 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   end
 end
 
-# 6.2.5
-sub_control_id = "#{control_id}.5"
+# 6.2.14
+sub_control_id = "#{control_id}.14"
 control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   impact 'medium'
 
@@ -280,8 +334,8 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   end
 end
 
-# 6.2.6
-sub_control_id = "#{control_id}.6"
+# 6.2.15
+sub_control_id = "#{control_id}.15"
 control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   impact 'medium'
 
@@ -330,8 +384,8 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   end
 end
 
-# 6.2.7
-sub_control_id = "#{control_id}.7"
+# 6.2.16
+sub_control_id = "#{control_id}.16"
 control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   impact 'medium'
 
