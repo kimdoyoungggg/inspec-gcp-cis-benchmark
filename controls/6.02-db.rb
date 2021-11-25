@@ -345,6 +345,60 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
   end
 end
 
+# 6.2.7
+sub_control_id = "#{control_id}.7"
+control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
+  impact 'medium'
+
+  title "[#{control_abbrev.upcase}] 7 Ensure 'log_statement' database flag for Cloud SQL PostgreSQL instance is set appropriately"
+
+  desc 'The value of log_statement flag determined the SQL statements that are logged.'
+  desc 'rationale', "Auditing helps in troubleshooting operational problems and also permits forensic analysis.
+  If log_statement is not set to the correct value, too many statements may be logged leading
+  to issues in finding the relevant information from the logs, or too few statements may be
+  logged with relevant information missing from the logs. Setting log_statement to align with
+  your organization's security and logging policies facilitates later auditing and review of
+  database activities. This recommendation is applicable to PostgreSQL database instances."
+
+  tag cis_scored: true
+  tag cis_level: 1
+  tag cis_gcp: sub_control_id.to_s
+  tag cis_version: cis_version.to_s
+  tag project: gcp_project_id.to_s
+  tag nist: ['AU-3']
+
+  ref 'CIS Benchmark', url: cis_url.to_s
+  ref 'GCP Docs', url: 'https://cloud.google.com/sql/docs/postgres/flags#setting_a_database_flag'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/9.6/runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT'
+
+  sql_cache.instance_names.each do |db|
+    if sql_cache.instance_objects[db].database_version.include? 'POSTGRES'
+      if sql_cache.instance_objects[db].settings.database_flags.nil?
+        impact 'medium'
+        describe "[#{gcp_project_id} , #{db} ] does not any have database flags." do
+          subject { false }
+          it { should be true }
+        end
+      else
+        impact 'medium'
+        describe.one do
+          sql_cache.instance_objects[db].settings.database_flags.each do |flag|
+            next unless flag.name == 'log_statement'
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_statement' set appropriately " do
+              subject { flag }
+              its('name') { should cmp 'log_statement' }
+            end
+          end
+        end
+      end
+    else
+      impact 'none'
+      describe "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database. This test is Not Applicable." do
+        skip "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database"
+      end
+    end
+  end
+end
 
 # 6.2.8
 sub_control_id = "#{control_id}.8"
