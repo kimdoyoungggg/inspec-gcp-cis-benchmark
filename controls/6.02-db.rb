@@ -384,7 +384,7 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
         describe.one do
           sql_cache.instance_objects[db].settings.database_flags.each do |flag|
             next unless flag.name == 'log_statement'
-            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_statement' set appropriately " do
+            describe "[#{gcp_project_id} , #{db} ] flag 'log_statement' set #{flag.value} " do
               subject { flag }
               its('name') { should cmp 'log_statement' }
             end
