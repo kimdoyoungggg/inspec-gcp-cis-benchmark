@@ -114,6 +114,11 @@ recommendation is applicable to PostgreSQL database instances."
               its('name') { should cmp 'log_error_verbosity' }
               its('value') { should cmp 'default' }
             end
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_error_verbosity' set to 'DEFAULT' or stricter " do
+              subject { flag }
+              its('name') { should cmp 'log_error_verbosity' }
+              its('value') { should cmp 'verbose' }
+            end
           end
         end
       end
@@ -229,6 +234,63 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
     end
   end
 end
+
+
+# 6.2.5
+sub_control_id = "#{control_id}.5"
+control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
+  impact 'medium'
+
+  title "[#{control_abbrev.upcase}] Ensure 'log_duration' database flag for Cloud SQL PostgreSQL instance is set to 'on'"
+
+  desc 'Enabling the log_duration setting causes the duration of each completed statement to be logged. '
+  desc 'rationale', "Monitoring the time taken to execute the queries can be crucial in identifying any resource
+  hogging queries and assessing the performance of the server. Further steps such as load
+  balancing and use of optimized queries can be taken to ensure the performance and
+  stability of the server. This recommendation is applicable to PostgreSQL database
+  instances."
+
+  tag cis_scored: true
+  tag cis_level: 1
+  tag cis_gcp: sub_control_id.to_s
+  tag cis_version: cis_version.to_s
+  tag project: gcp_project_id.to_s
+  tag nist: ['AU-3']
+
+  ref 'CIS Benchmark', url: cis_url.to_s
+  ref 'GCP Docs', url: 'https://cloud.google.com/sql/docs/postgres/flags'
+  ref 'GCP Docs', url: 'https://www.postgresql.org/docs/9.6/runtime-config-logging.html#GUC-LOG-MIN-DURATION-STATEMENT'
+
+  sql_cache.instance_names.each do |db|
+    if sql_cache.instance_objects[db].database_version.include? 'POSTGRES'
+      if sql_cache.instance_objects[db].settings.database_flags.nil?
+        impact 'medium'
+        describe "[#{gcp_project_id} , #{db} ] does not any have database flags." do
+          subject { false }
+          it { should be true }
+        end
+      else
+        impact 'medium'
+        describe.one do
+          sql_cache.instance_objects[db].settings.database_flags.each do |flag|
+            next unless flag.name == 'log_lock_waits'
+            describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_duration' set to 'on' " do
+              subject { flag }
+              its('name') { should cmp 'log_duration' }
+              its('value') { should cmp 'on' }
+            end
+          end
+        end
+      end
+    else
+      impact 'none'
+      describe "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database. This test is Not Applicable." do
+        skip "[#{gcp_project_id}] [#{db}] is not a PostgreSQL database"
+      end
+    end
+  end
+end
+
 
 # 6.2.6
 sub_control_id = "#{control_id}.6"
