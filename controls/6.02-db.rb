@@ -81,9 +81,9 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
 
   desc 'The log_error_verbosity flag controls the verbosity/details of messages logged. '
   desc 'rationale', "Auditing helps in troubleshooting operational problems and also permits forensic analysis.
-        If log_error_verbosity is not set to the correct value, too many details or too few details
-        may be logged. This flag should be configured with a value of 'DEFAULT' or stricter. This
-        recommendation is applicable to PostgreSQL database instances."
+If log_error_verbosity is not set to the correct value, too many details or too few details
+may be logged. This flag should be configured with a value of 'DEFAULT' or stricter. This
+recommendation is applicable to PostgreSQL database instances."
 
   tag cis_scored: true
   tag cis_level: 1
@@ -112,7 +112,7 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
             describe "[#{gcp_project_id} , #{db} ] should have a database flag 'log_error_verbosity' set to 'DEFAULT' or stricter " do
               subject { flag }
               its('name') { should cmp 'log_error_verbosity' }
-              its('value') { should cmp 'DEFAULT' }
+              its('value') { should cmp 'default' }
             end
           end
         end
@@ -135,7 +135,7 @@ control "cis-gcp-#{sub_control_id}-#{control_abbrev}" do
 
   desc 'Enabling the log_connections setting causes each attempted connection to the server to be logged, along with successful completion of client authentication. '
   desc 'rationale', "PostgreSQL does not log attempted connections by default. Enabling the log_connections setting will create log entries for each attempted connection
-                    as well as successful completion of client authentication which can be useful in troubleshooting issues and to determine any unusual connection attempts to the server."
+  as well as successful completion of client authentication which can be useful in troubleshooting issues and to determine any unusual connection attempts to the server."
 
   tag cis_scored: true
   tag cis_level: 1
