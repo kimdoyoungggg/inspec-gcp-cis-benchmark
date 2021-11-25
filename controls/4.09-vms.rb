@@ -49,7 +49,7 @@ title 'Ensure that Compute instances do not have public IP addresses'
   
     gce_instances.each do |instance|
       describe google_compute_instance_template(project: gcp_project_id, zone: instance[:zone], name: instance[:name]) do
-        its('network_interfaces.access_config.nat_ip') { should_not exist }
+        its('properties.network_interfaces.access_config.nat_ip') { should_not exist }
       end
     end
   end
