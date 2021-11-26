@@ -61,4 +61,4 @@ title 'Ensure that Compute instances do not have public IP addresses'
       end
     end
   end
-  
+end
