@@ -48,10 +48,8 @@ title 'Ensure that Compute instances do not have public IP addresses'
     constraints'
   
     gce_instances.each do |instance|
-      gce = google_compute_instance(project: gcp_project_id, zone: instance[:zone], name: instance[:name])
-      describe "[#{gcp_project_id}] Instance #{instance[:zone]}/#{instance[:name]}" do
-        subject {gce}
-        it{should_not exist}
+      describe google_compute_instance(project: gcp_project_id, zone: instance[:zone], name: instance[:name]) do
+        its('external_ip'){should_not exist}
       end
     end
   end
