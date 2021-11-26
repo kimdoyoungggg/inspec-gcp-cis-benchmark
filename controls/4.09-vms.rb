@@ -50,8 +50,14 @@ title 'Ensure that Compute instances do not have public IP addresses'
     gce_instances.each do |instance|
       instance_object = google_compute_instance(project: gcp_project_id, zone: instance[:zone], name: instance[:name])
       describe "[#{gcp_project_id}] Instance #{instance[:zone]}/#{instance[:name]}" do
-      if instance_object.network_interfaces.access_configs.nat_ip.nil?
-        it 'Instance does not have PublicIP'
+      if instance_object.network_interfaces.access_configs.nil?
+        it 'should have a shielded instance config' do
+          expect(false).to be true
+        end
+      else
+        it 'Instance does not have PublicIP' do
+          expect(instance_object.network_interfaces.access_configs.nat_ip).to be false
+        end
       end
     end
   end
