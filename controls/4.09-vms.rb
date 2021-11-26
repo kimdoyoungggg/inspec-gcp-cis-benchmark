@@ -48,8 +48,10 @@ title 'Ensure that Compute instances do not have public IP addresses'
     constraints'
   
     gce_instances.each do |instance|
-      describe google_compute_instance_template(project: gcp_project_id, zone: instance[:zone], name: instance[:name]) do
-        its('properties.machine_type') { should eq 'f1-micro' }
+      instance_object = google_compute_instance(project: gcp_project_id, zone: instance[:zone], name: instance[:name])
+      describe "[#{gcp_project_id}] Instance #{instance[:zone]}/#{instance[:name]}" do
+      if instance_object.network_interfaces.access_configs.nat_ip.nil?
+        it 'Instance does not have PublicIP'
       end
     end
   end
